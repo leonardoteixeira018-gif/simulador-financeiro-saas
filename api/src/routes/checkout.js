@@ -59,14 +59,22 @@ router.post("/", async (req, res) => {
       }
     });
 
+    const paymentUrl = charge.invoiceUrl || charge.bankSlipUrl || charge.transactionReceiptUrl;
+    if (!paymentUrl) {
+      console.error("Asaas não retornou URL de pagamento. Resposta:", JSON.stringify(charge));
+      return res.status(500).json({ error: "Asaas não retornou URL de pagamento. Verifique o ASAAS_API_KEY e o ambiente (sandbox vs produção)." });
+    }
+
     return res.json({
-      paymentUrl: charge.invoiceUrl,
+      paymentUrl,
       paymentId: charge.id
     });
 
   } catch (error) {
-    console.error("Erro no checkout:", error?.response?.data || error.message);
-    return res.status(500).json({ error: "Erro ao criar cobrança" });
+    const asaasError = error?.response?.data;
+    console.error("Erro no checkout:", asaasError || error.message);
+    const message = asaasError?.errors?.[0]?.description || asaasError?.description || "Erro ao criar cobrança";
+    return res.status(500).json({ error: message });
   }
 });
 

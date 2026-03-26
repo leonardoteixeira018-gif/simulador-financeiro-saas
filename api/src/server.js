@@ -7,14 +7,27 @@ const webhookRouter = require("./routes/webhook");
 
 const app = express();
 
-app.use(cors({
-  origin: [
-    "https://bubuya.com.br",
-    "https://www.bubuya.com.br",
-    "https://simulador-financeiro-saas.vercel.app",
-    "http://localhost:5173"
-  ]
-}));
+const allowedOrigins = [
+  "https://bubuya.com.br",
+  "https://www.bubuya.com.br",
+  "https://simulador-financeiro-saas.vercel.app",
+  "http://localhost:5173",
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (server-to-server, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origem não permitida: ${origin}`));
+  },
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: false,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // Preflight para todas as rotas
 
 app.use(express.json());
 
